@@ -29,7 +29,8 @@ void conv_3x3_stride(
                         }
                     }
                 }
-                output[oc*out_h*out_w + oh*out_w + ow] = (data_t)acc;
+                // output[oc*out_h*out_w + oh*out_w + ow] = (data_t)acc;
+                output[oc*out_h*out_w + oh*out_w + ow] = quantize_acc_to_data(acc);
             }
         }
     }
@@ -57,7 +58,8 @@ void conv_1x1_stride(
                     acc_t w = weights[oc*(in_ch) + ic];
                     acc += val * w;
                 }
-                output[oc*out_h*out_w + oh*out_w + ow] = (data_t)acc;
+                // output[oc*out_h*out_w + oh*out_w + ow] = (data_t)acc;
+                output[oc*out_h*out_w + oh*out_w + ow] = quantize_acc_to_data(acc);
             }
         }
     }

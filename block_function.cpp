@@ -38,9 +38,9 @@ void run_resnet_block(
     int out_w = in_w / 2; // out_h = out_w = 7
     int out_size = out_h*out_w*out_ch; // 7*7*512
 
-    static data_t out1[14*14*512]; // Adjust sizes as needed (max)
-    static data_t out2[14*14*512];
-    static data_t skip_out[14*14*512];
+    static data_t out1[IN_H*IN_W*OUT_C]; // Adjust sizes as needed, here is max
+    static data_t out2[IN_H*IN_W*OUT_C];
+    static data_t skip_out[IN_H*IN_W*OUT_C];
 
     // MAIN PATH
     // Conv 3x3 stride 2

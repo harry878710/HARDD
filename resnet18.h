@@ -22,7 +22,7 @@
 typedef ap_fixed<8,4>     data_t;   // 4 bits integer, 4 bits fractional
 
 // For accumulations to prevent overflow
-typedef ap_fixed<32,16>    acc_t;    // 16 bits integer, 16 bits fractional
+typedef ap_fixed<16,8>    acc_t;    // 8 bits integer, 8 bits fractional
 
 // Dimensions for this block
 #define IN_H 14
@@ -35,6 +35,10 @@ typedef ap_fixed<32,16>    acc_t;    // 16 bits integer, 16 bits fractional
 
 // For skip connection convolution
 #define SKIP_K 1
+
+// Quantization scale parameter
+static const float IN_SCALE = 16.0f;
+static const float OUT_SCALE = 16.0f;
 
 #endif
 

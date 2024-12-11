@@ -29,7 +29,9 @@ void batch_norm(
 
             // Requantize
             // acc_t qval = (acc_t)val;
-            feature_map[idx] = (data_t)val;
+            // feature_map[idx] = (data_t)qval;
+            data_t qval = quantize_float_to_data(val);
+            feature_map[idx] = qval;
         }
     }
 }

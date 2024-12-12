@@ -5,11 +5,13 @@
 
 #include <ap_fixed.h>
 #include <iostream>
+#include <fstream>
 #include <cmath>
 #include <hls_math.h>
 #include <hls_stream.h>
 #include <cstdlib>
 #include <cstdint>
+#include <string>
 
 // ============================================================================
 // Data Type Definitions

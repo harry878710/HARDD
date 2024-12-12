@@ -1,107 +1,84 @@
-#include "ResNet18_weights.h"
-#include <vector>
-#include <fstream>
-#include <sstream>
-#include <iostream>
+// resnet18_weights.cpp
+#include "resnet18_weights.h"
+#include <string>
+using namespace std;
 
-// External declarations of weights and BN parameters.
-extern data_t block_conv1_weights[BLOCK_CONV1_SIZE];
-//extern acc_t block_conv1_bias[BLOCK_CONV1_OUT_C];
-extern float   block_conv1_bn_mean[OUT_C];
-extern float   block_conv1_bn_deno[OUT_C];
-extern float   block_conv1_bn_gamma[OUT_C];
-extern float   block_conv1_bn_beta[OUT_C];
+static bool arrays_initialized = false;
 
-extern data_t block_conv2_weights[BLOCK_CONV2_SIZE];
-//extern acc_t block_conv2_bias[BLOCK_CONV2_OUT_C];
-extern float   block_conv2_bn_mean[OUT_C];
-extern float   block_conv2_bn_deno[OUT_C];
-extern float   block_conv2_bn_gamma[OUT_C];
-extern float   block_conv2_bn_beta[OUT_C];
-
-extern data_t skip_conv_weights[SKIP_CONV_SIZE];
-//extern acc_t skip_conv_bias[SKIP_CONV_OUT_C];
-extern float   skip_bn_mean[OUT_C];
-extern float   skip_bn_deno[OUT_C];
-extern float   skip_bn_gamma[OUT_C];
-extern float   skip_bn_beta[OUT_C];
-
-
-// Function to Extract Data from resnet_parameter.txt File
-void extract_data_from_file(const std::string& filename) {
-    std::ifstream file(filename);
-    if (!file.is_open()) {
-        std::cerr << "Error: Unable to open file " << filename << "\n";
-        return;
+template<typename T>
+bool load_array_from_file(const string &filename, T* arr, int size) {
+    ifstream infile(filename);
+    if (!infile.is_open()) {
+        cerr << "Error: Unable to open " << filename << endl;
+        return false;
     }
-
-    std::string line;
-    int index = 0;
-
-    if (std::getline(file, line) == "conv1")
-   // Read Block Conv1 Parameters
-   case(layers)
-    for (int i = 0; i < block_conv1_weights.size() && std::getline(file, line); i++) {
-        block_conv1_weights[i] = std::stof(line);
+    for (int i = 0; i < size; i++) {
+        if (!(infile >> arr[i])) {
+            cerr << "Error: Not enough data in " << filename << endl;
+            return false;
+        }
     }
-    for (int i = 0; i < block_conv1_bias.size() && std::getline(file, line); i++) {
-        block_conv1_bias[i] = std::stof(line);
-    }
-    for (int i = 0; i < block_conv1_bn_mean.size() && std::getline(file, line); i++) {
-        block_conv1_bn_mean[i] = std::stof(line);
-    }
-    for (int i = 0; i < block_conv1_bn_deno.size() && std::getline(file, line); i++) {
-        block_conv1_bn_deno[i] = std::stof(line);
-    }
-    for (int i = 0; i < block_conv1_bn_gamma.size() && std::getline(file, line); i++) {
-        block_conv1_bn_gamma[i] = std::stof(line);
-    }
-    for (int i = 0; i < block_conv1_bn_beta.size() && std::getline(file, line); i++) {
-        block_conv1_bn_beta[i] = std::stof(line);
-    }
-
-    // Read Block Conv2 Parameters
-    for (int i = 0; i < block_conv2_weights.size() && std::getline(file, line); i++) {
-        block_conv2_weights[i] = std::stof(line);
-    }
-    for (int i = 0; i < block_conv2_bias.size() && std::getline(file, line); i++) {
-        block_conv2_bias[i] = std::stof(line);
-    }
-    for (int i = 0; i < block_conv2_bn_mean.size() && std::getline(file, line); i++) {
-        block_conv2_bn_mean[i] = std::stof(line);
-    }
-    for (int i = 0; i < block_conv2_bn_deno.size() && std::getline(file, line); i++) {
-        block_conv2_bn_deno[i] = std::stof(line);
-    }
-    for (int i = 0; i < block_conv2_bn_gamma.size() && std::getline(file, line); i++) {
-        block_conv2_bn_gamma[i] = std::stof(line);
-    }
-    for (int i = 0; i < block_conv2_bn_beta.size() && std::getline(file, line); i++) {
-        block_conv2_bn_beta[i] = std::stof(line);
-    }
-
-    // Read Skip Connection Parameters
-    for (int i = 0; i < skip_conv_weights.size() && std::getline(file, line); i++) {
-        skip_conv_weights[i] = std::stof(line);
-    }
-    for (int i = 0; i < skip_conv_bias.size() && std::getline(file, line); i++) {
-        skip_conv_bias[i] = std::stof(line);
-    }
-    for (int i = 0; i < skip_bn_mean.size() && std::getline(file, line); i++) {
-        skip_bn_mean[i] = std::stof(line);
-    }
-    for (int i = 0; i < skip_bn_deno.size() && std::getline(file, line); i++) {
-        skip_bn_deno[i] = std::stof(line);
-    }
-    for (int i = 0; i < skip_bn_gamma.size() && std::getline(file, line); i++) {
-        skip_bn_gamma[i] = std::stof(line);
-    }
-    for (int i = 0; i < skip_bn_beta.size() && std::getline(file, line); i++) {
-        skip_bn_beta[i] = std::stof(line);
-    }
-
-    file.close();
+    infile.close();
+    return true;
 }
-float   skip_bn_beta[OUT_C] = {
-    0.0f
-};
+
+// Define the arrays as per the header
+// data_t block_conv1_weights[BLOCK_CONV1_SIZE];
+// acc_t block_conv1_bias[BLOCK_CONV1_OUT_C];
+float block_conv1_bn_mean[OUT_C];
+// float block_conv1_bn_deno[OUT_C];
+// float block_conv1_bn_gamma[OUT_C];
+// float block_conv1_bn_beta[OUT_C];
+
+// data_t block_conv2_weights[BLOCK_CONV2_SIZE];
+// acc_t block_conv2_bias[BLOCK_CONV2_OUT_C];
+// float block_conv2_bn_mean[OUT_C];
+// float block_conv2_bn_deno[OUT_C];
+// float block_conv2_bn_gamma[OUT_C];
+// float block_conv2_bn_beta[OUT_C];
+
+// data_t skip_conv_weights[SKIP_CONV_SIZE];
+// acc_t skip_conv_bias[SKIP_CONV_OUT_C];
+// float skip_bn_mean[OUT_C];
+// float skip_bn_deno[OUT_C];
+// float skip_bn_gamma[OUT_C];
+// float skip_bn_beta[OUT_C];
+
+// This function initializes all arrays by reading from text files.
+// Call this function before running your FPGA block or main inference function.
+bool initialize_arrays() {
+    if (arrays_initialized) {
+        return true; // Already initialized
+    }
+
+    bool success = true;
+
+    // success &= load_array_from_file("block_conv1_weights.txt", block_conv1_weights, BLOCK_CONV1_SIZE);
+    // success &= load_array_from_file("block_conv1_bias.txt", block_conv1_bias, BLOCK_CONV1_OUT_C);
+    success &= load_array_from_file("./input_data/block_conv1_bn_mean.txt", block_conv1_bn_mean, OUT_C);
+    // success &= load_array_from_file("block_conv1_bn_deno.txt", block_conv1_bn_deno, OUT_C);
+    // success &= load_array_from_file("block_conv1_bn_gamma.txt", block_conv1_bn_gamma, OUT_C);
+    // success &= load_array_from_file("block_conv1_bn_beta.txt", block_conv1_bn_beta, OUT_C);
+
+    // success &= load_array_from_file("block_conv2_weights.txt", block_conv2_weights, BLOCK_CONV2_SIZE);
+    // success &= load_array_from_file("block_conv2_bias.txt", block_conv2_bias, BLOCK_CONV2_OUT_C);
+    // success &= load_array_from_file("block_conv2_bn_mean.txt", block_conv2_bn_mean, OUT_C);
+    // success &= load_array_from_file("block_conv2_bn_deno.txt", block_conv2_bn_deno, OUT_C);
+    // success &= load_array_from_file("block_conv2_bn_gamma.txt", block_conv2_bn_gamma, OUT_C);
+    // success &= load_array_from_file("block_conv2_bn_beta.txt", block_conv2_bn_beta, OUT_C);
+
+    // success &= load_array_from_file("skip_conv_weights.txt", skip_conv_weights, SKIP_CONV_SIZE);
+    // success &= load_array_from_file("skip_conv_bias.txt", skip_conv_bias, SKIP_CONV_OUT_C);
+    // success &= load_array_from_file("skip_bn_mean.txt", skip_bn_mean, OUT_C);
+    // success &= load_array_from_file("skip_bn_deno.txt", skip_bn_deno, OUT_C);
+    // success &= load_array_from_file("skip_bn_gamma.txt", skip_bn_gamma, OUT_C);
+    // success &= load_array_from_file("skip_bn_beta.txt", skip_bn_beta, OUT_C);
+
+    if (!success) {
+        cerr << "Error: Failed to load one or more weight/BN files." << endl;
+        return false;
+    }
+
+    arrays_initialized = true;
+    return true;
+}

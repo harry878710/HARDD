@@ -23,4 +23,8 @@ extern float   skip_bn_deno[OUT_C];
 extern float   skip_bn_gamma[OUT_C];
 extern float   skip_bn_beta[OUT_C];
 
+template<typename T>
+bool load_array_from_file(const std::string &filename, T* arr, int size);
+bool initialize_arrays();
+
 #endif

@@ -10,6 +10,7 @@ void batch_norm(
 ) {
     int size = H*W;
     for (int c = 0; c < C; c++) {
+        #pragma HLS pipeline II=1
         float m = mean[c];
         float d = deno[c];
         float g = gamma[c];

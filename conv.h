@@ -3,6 +3,16 @@
 #define CONV_H
 
 #include "resnet18.h"
+#include "quantize.h"
+
+void conv2D(
+    const data_t *input,
+    data_t *output,
+    const data_t *weights,
+    const acc_t *bias,
+    int in_h, int in_w, int in_ch,
+    int out_ch, int k_size, int stride, int pad
+);
 
 void conv_3x3_stride(
     const data_t *input,

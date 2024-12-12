@@ -3,6 +3,7 @@
 #define BN_H
 
 #include "resnet18.h"
+#include "quantize.h"
 
 void batch_norm(
     data_t *feature_map,

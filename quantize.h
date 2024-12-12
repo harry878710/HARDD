@@ -21,7 +21,7 @@ inline data_t quantize_acc_to_data(acc_t val){
     if (scaled > 2047)  scaled = 2047;
     
     // Convert to data_t
-    data_t qval = (data_t)(scaled / OUT_SCALE);
+    data_t qval = (data_t)(scaled / acc_t(OUT_SCALE));
     return qval;
 }
 

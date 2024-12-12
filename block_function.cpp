@@ -1,10 +1,5 @@
 // block_function.cpp
-#include "resnet18.h"
-// #include "block_functions.h"
-// #include "conv.h"
-// #include "bn.h"
-// #include "relu.h"
-// #include "skipConnect.h"
+#include "block_function.h"
 
 // External declarations of weights and BN parameters.
 // These should be defined in resnet18_weights.h as quantized int8_t for weights, int32_t for bias, and float for BN.

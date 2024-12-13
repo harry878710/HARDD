@@ -1,5 +1,6 @@
 // block_function.cpp
 #include "block_function.h"
+#include "resnet18_weights.h"
 
 // External declarations of weights and BN parameters.
 // These should be defined in resnet18_weights.h as quantized int8_t for weights, int32_t for bias, and float for BN.
@@ -41,6 +42,9 @@ void run_resnet_block(
     // Conv 3x3 stride 2
     // conv_3x3_stride(input, out1, block_conv1_weights, block_conv1_bias, in_h, in_w, in_ch, out_ch, 2, 1);
     conv_3x3_stride(input, out1, block_conv1_weights, in_h, in_w, in_ch, out_ch, 2, 1);
+    // for (int i = 0; i < 10; i++) {
+    //     printf("Out 1[%d]: %f\n", i, (float)out1[i]);
+    // }
     // BN + ReLU
     batch_norm(out1, out_h, out_w, out_ch, block_conv1_bn_mean, block_conv1_bn_deno, block_conv1_bn_gamma, block_conv1_bn_beta);
     relu(out1, out_h*out_w*out_ch);

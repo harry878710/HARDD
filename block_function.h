@@ -9,6 +9,7 @@
 #include "ReLU.h"
 #include "skipConnect.h"
 #include "quantize.h"
+#include "test_hls_stream.h"
 
 void run_resnet_block(const data_t* input, data_t* output, int in_h, int in_w, int in_ch, int out_ch);
 

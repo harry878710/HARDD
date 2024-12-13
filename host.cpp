@@ -15,6 +15,10 @@ using namespace std;
 data_t input_block[INPUT_TENSOR_SIZE]; // 14x14x256
 data_t output_block[OUTPUT_TENSOR_SIZE]; // 7x7x512
 data_t block_conv1_weights[BLOCK_CONV1_SIZE]; // 512*256*3*3
+float f_input_block[INPUT_TENSOR_SIZE]; // 14x14x256
+data_t t_input_block[INPUT_TENSOR_SIZE]; // FOR TEST STREAM
+float f_output_block[OUTPUT_TENSOR_SIZE]; // 7x7x512
+float f_block_conv1_weights[BLOCK_CONV1_SIZE]; // 512*256*3*3
 // acc_t block_conv1_bias[BLOCK_CONV1_OUT_C];
 float block_conv1_bn_mean[OUT_C]; // 512
 float block_conv1_bn_deno[OUT_C];
@@ -22,6 +26,7 @@ float block_conv1_bn_gamma[OUT_C];
 float block_conv1_bn_beta[OUT_C];
 
 data_t block_conv2_weights[BLOCK_CONV2_SIZE]; // 512*512*3*3
+float f_block_conv2_weights[BLOCK_CONV2_SIZE]; // 512*512*3*3
 // acc_t block_conv2_bias[BLOCK_CONV2_OUT_C];
 float block_conv2_bn_mean[OUT_C];
 float block_conv2_bn_deno[OUT_C];
@@ -29,6 +34,7 @@ float block_conv2_bn_gamma[OUT_C];
 float block_conv2_bn_beta[OUT_C];
 
 data_t skip_conv_weights[SKIP_CONV_SIZE]; // 512*256*3*3
+float f_skip_conv_weights[SKIP_CONV_SIZE]; // 512*256*3*3
 // acc_t skip_conv_bias[SKIP_CONV_OUT_C];
 float skip_bn_mean[OUT_C];
 float skip_bn_deno[OUT_C];
@@ -41,38 +47,82 @@ bool read_data_from_file(const char* filename, T* arr, int size);
 bool initialize_arrays();
 
 int main() {
+    // ============================================================================
     // initialize arrays for inputs
+    // ============================================================================
     if (!initialize_arrays()){
         return -1; // Initialization failed
     }
+    // ============================================================================
+    // Quantize input feature map & weights to data type (e.g. ap_fixed<8,4>)
+    // ============================================================================
+    for(int i= 0; i < INPUT_TENSOR_SIZE; i++){
+        input_block[i] = quantize_float_to_data(f_input_block[i]);}
+    for(int i= 0; i < BLOCK_CONV1_SIZE; i++){
+        block_conv1_weights[i] = quantize_float_to_data(f_block_conv1_weights[i]);}
+    for(int i= 0; i < BLOCK_CONV2_SIZE; i++){
+        block_conv2_weights[i] = quantize_float_to_data(f_block_conv2_weights[i]);}
+    for(int i= 0; i < SKIP_CONV_SIZE; i++){
+        skip_conv_weights[i] = quantize_float_to_data(f_skip_conv_weights[i]);}
 
+    // ============================================================================
     // verify the input feature map
-    for (int i = 0; i < 100; i++) {
+    // ============================================================================
+    for (int i = 0; i < 10; i++) {
         printf("Input featuremap[%d]: %f\n", i, (float)input_block[i]);
     }
+    for (int i = 0; i < 10; i++) {
+        printf("Weight 1[%d]: %f\n", i, (float)block_conv1_weights[i]);
+    }
+    for (int i = 0; i < 10; i++) {
+        printf("Weight 2[%d]: %f\n", i, (float)block_conv2_weights[i]);
+    }
+    for (int i = 0; i < 10; i++) {
+        printf("Skip Weight[%d]: %f\n", i, (float)skip_conv_weights[i]);
+    }
 
+    // ============================================================================
     // Create an hls::streams
-    // hls::stream<float> data_stream;
+    // ============================================================================
+    hls::stream<data_t> data_stream;
+    hls::stream<data_t> conv_1_weights_stream;
+    hls::stream<data_t> conv_2_weights_stream;
+    hls::stream<data_t> conv_s_weights_stream;
+    hls::stream<data_t> test_stream;
 
-    // Load data into the streams
-    // if (!load_array_to_stream(data_stream, data_array, DATA_SIZE)) {
-    //     std::cerr << "Error: Failed to load data into stream." << std::endl;
-    //     return -1;
-    // }
-    // std::cout << "Data successfully loaded into hls::stream." << std::endl;
+    // ============================================================================
+    // Load data from arrays into the streams
+    // ============================================================================
+    if (!load_array_to_stream(data_stream, input_block, INPUT_TENSOR_SIZE)) {
+        std::cerr << "Error: Failed to load data into stream." << std::endl;
+        return -1;}
+    if (!load_array_to_stream(conv_1_weights_stream, block_conv1_weights, BLOCK_CONV1_SIZE)) {
+        std::cerr << "Error: Failed to load data into stream." << std::endl;
+        return -1;}
+    if (!load_array_to_stream(conv_2_weights_stream, block_conv2_weights, BLOCK_CONV2_SIZE)) {
+        std::cerr << "Error: Failed to load data into stream." << std::endl;
+        return -1;}
+    if (!load_array_to_stream(conv_s_weights_stream, skip_conv_weights, SKIP_CONV_SIZE)) {
+        std::cerr << "Error: Failed to load data into stream." << std::endl;
+        return -1;}
 
+    std::cout << "Data successfully loaded into hls::stream." << std::endl;
+
+    // ============================================================================
     // Generate random 8-bit input
+    // ============================================================================
     // static data_t input_block[INPUT_TENSOR_SIZE];
     // for (int i = 0; i < INPUT_TENSOR_SIZE; i++) {
     //     // input_block[i] = float(rand()) % 128.0f; // random 8-bit signed
     //     float random_val = ((rand() % 160) / 10.0f) - 8.0f; // -8.0 to +7.9
     //     input_block[i] = data_t(random_val);
     // }
-
     // Output buffer
     // static data_t output_block[OUTPUT_TENSOR_SIZE];
 
+    // ============================================================================
     // Run the block
+    // ============================================================================
     run_resnet_block(
         input_block, 
         output_block,
@@ -80,13 +130,33 @@ int main() {
     );
     printf("Block computation complete.\n");
     // printf("//I am here/// \n");
+    
+    // ============================================================================
+    // Retrieve data from the output stream
+    // ============================================================================
+    test_hls_module(data_stream, test_stream, INPUT_TENSOR_SIZE);
+    for (int i = 0; i < INPUT_TENSOR_SIZE; i++) {
+        if (!test_stream.empty()) {
+            t_input_block[i] = test_stream.read();
+        } else {
+            std::cerr << "Error: Output stream is empty at index " << i << std::endl;
+            break;
+        }
+    }
 
+    // ============================================================================
     // Print some portion of the output for verification
+    // ============================================================================
     for (int i = 0; i < 10; i++) {
         printf("Output tensor [%d]: %f\n", i, (float)output_block[i]);
     }
+    for (int i = 0; i < 10; i++) {
+        printf("Test stream [%d]: %f\n", i, (float)t_input_block[i]);
+    }
 
+    // ============================================================================
     // Write out output tensor
+    // ============================================================================
     ofstream outFile("output_tensor.txt"); 
     if (!outFile){
         cerr << "Error: Could not open the file for writing." << endl;
@@ -107,8 +177,9 @@ int main() {
 
     return 0;
 }
-
+// ============================================================================
 // Function to read data from a file into an array
+// ============================================================================
 template <typename T>
 bool read_data_from_file(const char* filename, T* arr, int size) {
     std::ifstream infile(filename);
@@ -128,7 +199,9 @@ bool read_data_from_file(const char* filename, T* arr, int size) {
     return true;
 }
 
+// ============================================================================
 // initializes all arrays by reading from text files
+// ============================================================================
 bool initialize_arrays() {
     if (arrays_initialized) {
         return true; // Already initialized
@@ -136,22 +209,22 @@ bool initialize_arrays() {
 
     bool success = true;
 
-    success &= read_data_from_file("resnet18_input_data.txt", input_block, INPUT_TENSOR_SIZE);
-    success &= read_data_from_file("block_conv1_weights.txt", block_conv1_weights, BLOCK_CONV1_SIZE);
+    success &= read_data_from_file("resnet18_input_data.txt", f_input_block, INPUT_TENSOR_SIZE);
+    success &= read_data_from_file("block_conv1_weights.txt", f_block_conv1_weights, BLOCK_CONV1_SIZE);
     // success &= read_data_from_file("block_conv1_bias.txt", block_conv1_bias, BLOCK_CONV1_OUT_C);
     success &= read_data_from_file("block_conv1_bn_mean.txt", block_conv1_bn_mean, OUT_C);
     success &= read_data_from_file("block_conv1_bn_deno.txt", block_conv1_bn_deno, OUT_C);
     success &= read_data_from_file("block_conv1_bn_gamma.txt", block_conv1_bn_gamma, OUT_C);
     success &= read_data_from_file("block_conv1_bn_beta.txt", block_conv1_bn_beta, OUT_C);
 
-    success &= read_data_from_file("block_conv2_weights.txt", block_conv2_weights, BLOCK_CONV2_SIZE);
+    success &= read_data_from_file("block_conv2_weights.txt", f_block_conv2_weights, BLOCK_CONV2_SIZE);
     // success &= read_data_from_file("block_conv2_bias.txt", block_conv2_bias, BLOCK_CONV2_OUT_C);
     success &= read_data_from_file("block_conv2_bn_mean.txt", block_conv2_bn_mean, OUT_C);
     success &= read_data_from_file("block_conv2_bn_deno.txt", block_conv2_bn_deno, OUT_C);
     success &= read_data_from_file("block_conv2_bn_gamma.txt", block_conv2_bn_gamma, OUT_C);
     success &= read_data_from_file("block_conv2_bn_beta.txt", block_conv2_bn_beta, OUT_C);
 
-    success &= read_data_from_file("skip_conv_weights.txt", skip_conv_weights, SKIP_CONV_SIZE);
+    success &= read_data_from_file("skip_conv_weights.txt", f_skip_conv_weights, SKIP_CONV_SIZE);
     // success &= read_data_from_file("skip_conv_bias.txt", skip_conv_bias, SKIP_CONV_OUT_C);
     success &= read_data_from_file("skip_bn_mean.txt", skip_bn_mean, OUT_C);
     success &= read_data_from_file("skip_bn_deno.txt", skip_bn_deno, OUT_C);

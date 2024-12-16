@@ -17,10 +17,9 @@ void batch_norm(
         float g = gamma.read();
         float b = beta.read();
         for (int i = 0; i < size; i++) {
-            #pragma HLS pipeline II=1
-            // int idx = c*size + i;
+            int idx = c*size + i;
             // Dequantize
-            float val = (float)feature_map.read();
+            float val = float(feature_map.read());
             
             // BN
             // val = ((val - m) / d) * g + b;  // d = sqrtf(var + epsilon))
@@ -28,12 +27,12 @@ void batch_norm(
             float tmp2 = tmp1 / d;
             float tmp3 = tmp2 * g;
             float tmp4 = tmp3 + b;
-            // val = tmp4;
+            val = tmp4;
 
             // Requantize
             // acc_t qval = (acc_t)val;
             // feature_map[idx] = (data_t)qval;
-            data_t qval = quantize_float_to_data(tmp4);
+            data_t qval = quantize_float_to_data(val);
             // data_t qval = (data_t)val;
             bn_feature_map.write(qval);
         }

@@ -1,103 +1,76 @@
 // conv.cpp
 #include "conv.h"
+template void conv2D<512, 256, 14, 14, 3>(hls::stream<data_t>&, hls::stream<data_t>&, hls::stream<data_t>&, int, int);
+template void conv2D<512, 512, 7, 7, 3>(hls::stream<data_t>&, hls::stream<data_t>&, hls::stream<data_t>&, int, int);
+template void conv2D<512, 256, 14, 14, 1>(hls::stream<data_t>&, hls::stream<data_t>&, hls::stream<data_t>&, int, int);
 
+template<int CONV_OUT_C, int CONV_IN_C, int CONV_IN_H, int CONV_IN_W, int CONV_K>
 void conv2D(
-    const data_t *input,
-    data_t *output,
-    const data_t *weights,
-    // const acc_t *bias,
-    int in_h, int in_w, int in_ch,
-    int out_ch, int k_size, int stride, int pad
+    hls::stream<data_t> &input,
+    hls::stream<data_t> &output,
+    hls::stream<data_t> &weights,
+    int stride, int pad
 ) {
-    int out_h = in_h / stride;
-    int out_w = in_w / stride;
+    int out_h = CONV_IN_H / stride;
+    int out_w = CONV_IN_W / stride;
 
-    for (int oc = 0; oc < out_ch; oc++) {
+    // data_t weight_buffer[OUT_C][IN_C][K][K];
+    data_t weight_buffer[CONV_OUT_C][CONV_IN_C][CONV_K][CONV_K];
+    #pragma HLS ARRAY_PARTITION variable=weight_buffer dim=2 factor=4 cyclic
+    #pragma HLS BIND_STORAGE variable=weight_buffer type=ram_2p impl=uram
+    // Load weights
+    for(int oc = 0; oc < CONV_OUT_C; oc++) {
+        #pragma HLS DATAFLOW
+        for(int ic = 0; ic < CONV_IN_C; ic++) {
+            for(int kh = 0; kh < CONV_K; kh++) {
+                for(int kw = 0; kw < CONV_K; kw++) {
+                    #pragma HLS PIPELINE II=1
+                    // #pragma HLS UNROLL factor=4
+                    weight_buffer[oc][ic][kh][kw] = weights.read();
+                }
+            }
+        }
+    }
+    
+    // data_t input_buffer[IN_C][CONV_IN_H][CONV_IN_W];
+    data_t input_buffer[CONV_IN_C][CONV_IN_H][CONV_IN_W];
+    #pragma HLS ARRAY_PARTITION variable=input_buffer dim=1 factor=4 cyclic
+    #pragma HLS BIND_STORAGE variable=input_buffer type=ram_2p impl=bram
+
+    // Load input buffer
+    for(int ic = 0; ic < CONV_IN_C; ic++) {
+        #pragma HLS DATAFLOW
+        for(int ih = 0; ih < CONV_IN_H; ih++) {
+            for(int iw = 0; iw < CONV_IN_W; iw++) {
+                // #pragma HLS UNROLL
+                #pragma HLS PIPELINE II=1
+                input_buffer[ic][ih][iw] = input.read();
+            }
+        }
+    }
+
+    for (int oc = 0; oc < CONV_OUT_C; oc++) {
+        #pragma HLS DATAFLOW
         for (int oh = 0; oh < out_h; oh++) {
             for (int ow = 0; ow < out_w; ow++) {
                 // acc_t acc = bias[oc]; // bias is in acc type, which is 32-bit
                 acc_t acc = 0;
-                for (int kh = 0; kh < k_size; kh++) {
-                    for (int kw = 0; kw < k_size; kw++) {
+                for (int kh = 0; kh < CONV_K; kh++) {
+                    for (int kw = 0; kw < CONV_K; kw++) {
                         int ih = oh*stride + kh - pad;
                         int iw = ow*stride + kw - pad;
-                        if (ih >= 0 && ih < in_h && iw >= 0 && iw < in_w) {
-                            for (int ic = 0; ic < in_ch; ic++) {
-                                acc_t val = input[ih*in_w*in_ch + iw*in_ch + ic];
-                                acc_t w = weights[oc*(in_ch*k_size*k_size) + kh*(k_size*in_ch) + kw*(in_ch) + ic];
+                        if (ih >= 0 && ih < CONV_IN_H && iw >= 0 && iw < CONV_IN_W) {
+                            for (int ic = 0; ic < CONV_IN_C; ic++) {
+                                #pragma HLS PIPELINE II=1
+                                acc_t val = (acc_t)input_buffer[ic][ih][iw];
+                                acc_t w = (acc_t)weight_buffer[oc][ic][kh][kw];
                                 acc += val * w;
                             }
                         }
                     }
                 }
-                // output[oc*out_h*out_w + oh*out_w + ow] = (data_t)acc;
-                output[oc*out_h*out_w + oh*out_w + ow] = quantize_acc_to_data(acc);
-            }
-        }
-    }
-}
-
-void conv_3x3_stride(
-    const data_t *input,
-    data_t *output,
-    const data_t *weights,
-    // const acc_t *bias,
-    int in_h, int in_w, int in_ch,
-    int out_ch, int stride, int pad
-) {
-    int out_h = in_h / stride;
-    int out_w = in_w / stride;
-
-    for (int oc = 0; oc < out_ch; oc++) {
-        for (int oh = 0; oh < out_h; oh++) {
-            for (int ow = 0; ow < out_w; ow++) {
-                // acc_t acc = bias[oc]; // bias is in acc type, which is 32-bit
-                acc_t acc = 0;
-                for (int kh = 0; kh < 3; kh++) {
-                    for (int kw = 0; kw < 3; kw++) {
-                        int ih = oh*stride + kh - pad;
-                        int iw = ow*stride + kw - pad;
-                        if (ih >= 0 && ih < in_h && iw >= 0 && iw < in_w) {
-                            for (int ic = 0; ic < in_ch; ic++) {
-                                acc_t val = input[ih*in_w*in_ch + iw*in_ch + ic];
-                                acc_t w = weights[oc*(in_ch*3*3) + kh*(3*in_ch) + kw*(in_ch) + ic];
-                                acc += val * w;
-                            }
-                        }
-                    }
-                }
-                // output[oc*out_h*out_w + oh*out_w + ow] = (data_t)acc;
-                output[oc*out_h*out_w + oh*out_w + ow] = quantize_acc_to_data(acc);
-            }
-        }
-    }
-}
-
-void conv_1x1_stride(
-    const data_t *input,
-    data_t *output,
-    const data_t *weights,
-    // const acc_t *bias,
-    int in_h, int in_w, int in_ch,
-    int out_ch, int stride
-) {
-    int out_h = in_h / stride;
-    int out_w = in_w / stride;
-
-    for (int oc = 0; oc < out_ch; oc++) {
-        for (int oh = 0; oh < out_h; oh++) {
-            for (int ow = 0; ow < out_w; ow++) {
-                // acc_t acc = bias[oc];
-                acc_t acc = 0;
-                int ih = oh*stride;
-                int iw = ow*stride;
-                for (int ic = 0; ic < in_ch; ic++) {
-                    acc_t val = input[ih*in_w*in_ch + iw*in_ch + ic];
-                    acc_t w = weights[oc*(in_ch) + ic];
-                    acc += val * w;
-                }
-                // output[oc*out_h*out_w + oh*out_w + ow] = (data_t)acc;
-                output[oc*out_h*out_w + oh*out_w + ow] = quantize_acc_to_data(acc);
+                data_t q_val = quantize_acc_to_data(acc);
+                output.write(q_val);
             }
         }
     }

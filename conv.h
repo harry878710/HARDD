@@ -5,31 +5,21 @@
 #include "resnet18.h"
 #include "quantize.h"
 
+template<int CONV_OUT_C, int CONV_IN_C, int CONV_IN_H, int CONV_IN_W, int CONV_K>
 void conv2D(
-    const data_t *input,
-    data_t *output,
-    const data_t *weights,
-    // const acc_t *bias,
-    int in_h, int in_w, int in_ch,
-    int out_ch, int k_size, int stride, int pad
+    hls::stream<data_t> &input,
+    hls::stream<data_t> &output,
+    hls::stream<data_t> &weights,
+    int stride, int pad
 );
 
-void conv_3x3_stride(
-    const data_t *input,
-    data_t *output,
-    const data_t *weights,
-    // const acc_t *bias, // biases often stored as int32 for quantized models
-    int in_h, int in_w, int in_ch,
-    int out_ch, int stride, int pad
-);
-
-void conv_1x1_stride(
-    const data_t *input,
-    data_t *output,
-    const data_t *weights,
-    // const acc_t *bias,
-    int in_h, int in_w, int in_ch,
-    int out_ch, int stride
-);
+// old version
+// void conv2D(
+//     hls::stream<data_t> &input,
+//     hls::stream<data_t> &output,
+//     hls::stream<data_t> &weights,
+//     int in_h, int in_w, int in_ch,
+//     int out_ch, int k_size, int stride, int pad
+// );
 
 #endif

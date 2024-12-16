@@ -177,8 +177,6 @@ int main() {
     //     output_block,
     //     IN_H, IN_W, IN_C, OUT_C
     // );
-    // Define for run_resnet_block
-    // template<int CONV_OUT_C, int CONV_IN_C, int CONV_IN_H, int CONV_IN_W, int CONV_K>
     run_resnet_block(
         data_stream, 
         output_stream,

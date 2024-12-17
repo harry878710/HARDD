@@ -218,7 +218,7 @@ int main() {
     // Print some portion of the output for verification
     // ============================================================================
     for (int i = 0; i < 10; i++) {
-        printf("Output tensor [%d]: %f\n", i, (float)output_block[i]);
+        std::cout << "Output tensor [" << i << "], " << output_block << std::endl;
     }
 
     // ============================================================================

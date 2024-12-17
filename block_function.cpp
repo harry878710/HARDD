@@ -6,8 +6,8 @@
 #include "resnet18_weights.h"
 
 // Define data types
-// typedef ap_fixed<8,4> data_t;
-// typedef ap_fixed<16,8> acc_t;
+//   typedef ap_fixed<8,4> data_t;
+//   typedef ap_fixed<16,8> acc_t;
 
 // Function to run a ResNet block
 void run_resnet_block(
@@ -79,9 +79,9 @@ void run_resnet_block(
 
     // MAIN PATH
     // Conv 3x3 stride 2
-    // conv2D(d_input1, out_3x3_stride2, conv_1_weights_stream, in_h, in_w, in_ch, out_ch, 3, 2, 1);
+     conv2D(d_input1, out_3x3_stride2, conv_1_weights_stream, in_h, in_w, in_ch, out_ch, 3, 2, 1);
     // template<int CONV_OUT_C, int CONV_IN_C, int CONV_IN_H, int CONV_IN_W, int CONV_K>
-    conv2D<512, 256, 14, 14, 3>(d_input1, out_3x3_stride2, conv_1_weights_stream, 2, 1);
+//    conv2D<512, 256, 14, 14, 3>(d_input1, out_3x3_stride2, conv_1_weights_stream, 2, 1);
 
     // BN + ReLU
     batch_norm(
@@ -101,13 +101,13 @@ void run_resnet_block(
     );
 
     // Conv 3x3 stride 1
-    // conv2D(
-    //     out_3x3_stride2_relu,
-    //     out_3x3_stride1,
-    //     conv_2_weights_stream,
-    //     in_h / 2, in_w / 2, out_ch, out_ch, 3, 1, 1
-    // );
-    conv2D<512, 512, 7, 7, 3>(out_3x3_stride2_relu, out_3x3_stride1, conv_2_weights_stream, 1, 1);
+     conv2D(
+         out_3x3_stride2_relu,
+         out_3x3_stride1,
+         conv_2_weights_stream,
+         in_h / 2, in_w / 2, out_ch, out_ch, 3, 1, 1
+     );
+//    conv2D<512, 512, 7, 7, 3>(out_3x3_stride2_relu, out_3x3_stride1, conv_2_weights_stream, 1, 1);
 
     // BN (no ReLU yet)
     batch_norm(
@@ -121,13 +121,13 @@ void run_resnet_block(
     );
 
     // SKIP PATH:
-    // conv2D(
-    //     d_input2,
-    //     skip_out_3x3_stride1,
-    //     conv_s_weights_stream,
-    //     in_h, in_w, in_ch, out_ch, 1, 2, 0
-    // );
-    conv2D<512, 256, 14, 14, 1>(d_input2, skip_out_3x3_stride1, conv_s_weights_stream, 2, 0);
+     conv2D(
+         d_input2,
+         skip_out_3x3_stride1,
+         conv_s_weights_stream,
+         in_h, in_w, in_ch, out_ch, 1, 2, 0
+     );
+//    conv2D<512, 256, 14, 14, 1>(d_input2, skip_out_3x3_stride1, conv_s_weights_stream, 2, 0);
 
     batch_norm(
         skip_out_3x3_stride1,

@@ -79,9 +79,9 @@ void run_resnet_block(
 
     // MAIN PATH
     // Conv 3x3 stride 2
-     conv2D(d_input1, out_3x3_stride2, conv_1_weights_stream, in_h, in_w, in_ch, out_ch, 3, 2, 1);
+    //  conv2D(d_input1, out_3x3_stride2, conv_1_weights_stream, in_h, in_w, in_ch, out_ch, 3, 2, 1);
     // template<int CONV_OUT_C, int CONV_IN_C, int CONV_IN_H, int CONV_IN_W, int CONV_K>
-//    conv2D<512, 256, 14, 14, 3>(d_input1, out_3x3_stride2, conv_1_weights_stream, 2, 1);
+   conv2D<512, 256, 14, 14, 3>(d_input1, out_3x3_stride2, conv_1_weights_stream, 2, 1);
 
     // BN + ReLU
     batch_norm(

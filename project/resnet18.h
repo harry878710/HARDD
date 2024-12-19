@@ -19,7 +19,7 @@
 // ============================================================================
 
 // Fixed-point data type for inputs, weights, and outputs
-typedef ap_fixed<8,4, AP_RND, AP_SAT>     data_t;   // <total-bit, int-bit>   4 bits integer, 4 bits fractional
+typedef ap_fixed<8,6, AP_RND, AP_SAT>     data_t;   // <total-bit, int-bit>   4 bits integer, 4 bits fractional
 
 // For accumulations to prevent overflow
 typedef ap_fixed<32,16, AP_RND, AP_SAT>    acc_t;    // 8 bits integer, 8 bits fractional

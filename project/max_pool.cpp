@@ -5,11 +5,11 @@
 #define K_SIZE 3
 #define STRIDE 2
 #define PAD 1
-#define IN_H 4
-#define IN_W 4
+#define IN_H 112
+#define IN_W 112
 #define IN_CH 64
-#define OUT_H 2 // ((IN_H + 2 * PAD - K_SIZE) / STRIDE + 1)
-#define OUT_W 2 // ((IN_W + 2 * PAD - K_SIZE) / STRIDE + 1)
+#define OUT_H 56 // ((IN_H + 2 * PAD - K_SIZE) / STRIDE + 1)
+#define OUT_W 56 // ((IN_W + 2 * PAD - K_SIZE) / STRIDE + 1)
 
 // Max Pooling Function: 3x3 kernel, stride=2, pad=1, dilation=1
 void max_pool(
@@ -21,7 +21,7 @@ void max_pool(
     const int PAD_W = IN_W + 2 * PAD;
 
     // Line buffers to store 3 rows of data
-    data_t line_buf0[IN_CH][PAD_W];
+    data_t line_buf0[IN_CH][PAD_W]; // 64*114*3 window to process max pool
     data_t line_buf1[IN_CH][PAD_W];
     data_t line_buf2[IN_CH][PAD_W];
     #pragma HLS ARRAY_PARTITION variable=line_buf0 complete dim=1

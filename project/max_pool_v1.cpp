@@ -18,7 +18,7 @@ void max_pool(
     hls::stream<float> &out_stream
 ) {
     // Create a buffer to hold the padded input
-    float input_buf[IN_CH][IN_H + 2 * PAD][IN_W + 2 * PAD];
+    float input_buf[IN_CH][IN_H + 2 * PAD][IN_W + 2 * PAD];  // 64*114*114
     #pragma HLS ARRAY_PARTITION variable=input_buf complete dim=1
 
     // Read the input into the buffer with zero-padding

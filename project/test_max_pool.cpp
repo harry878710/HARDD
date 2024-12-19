@@ -11,8 +11,8 @@ int main() {
     hls::stream<data_t> input_stream;
     hls::stream<data_t> output_stream;
 
-    int in_height = 4;
-    int in_width = 4;
+    int in_height = 112;
+    int in_width = 112;
     int channels = 64;
 
     // Prepare input data

@@ -42,8 +42,8 @@ void max_pool(
     // We'll read line by line. After reading each line, we shift line_buf2->line_buf1->line_buf0.
     for (int h = 0; h < PAD_H; h++) {
         // Shift line buffers down
-        for (int c = 0; c < IN_CH; c++) {
-            for (int w = 0; w < PAD_W; w++) {
+        for (int w = 0; w < PAD_W; w++) {
+            for (int c = 0; c < IN_CH; c++) {
                 #pragma HLS PIPELINE II=1
                 line_buf2[c][w] = line_buf1[c][w];
                 line_buf1[c][w] = line_buf0[c][w];
@@ -51,8 +51,8 @@ void max_pool(
         }
 
         // Read the current line into line_buf0 with padding
-        for (int c = 0; c < IN_CH; c++) {
-            for (int w = 0; w < PAD_W; w++) {
+        for (int w = 0; w < PAD_W; w++) {
+            for (int c = 0; c < IN_CH; c++) {
                 #pragma HLS PIPELINE II=1
                 data_t val = 0.0;
                 if ((h >= PAD && h < IN_H + PAD) && (w >= PAD && w < IN_W + PAD)) {
